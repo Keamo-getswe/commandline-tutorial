@@ -1,0 +1,69 @@
+1. Read man ls and write an ls command that lists files in the following manner:
+
+- Includes all files, including hidden files
+- Sizes are listed in human readable format (e.g. 454M instead of 454279954)
+- Files are ordered by recency
+- Output is colorized
+
+$ ls -ltcah
+total 28K
+drwxrwxr-x 3 kea kea 4.0K Dec 16 22:40 .
+-rw-rw-r-- 1 kea kea  269 Dec 16 22:40 ShellTools_tut
+drwxrwxr-x 2 kea kea 4.0K Dec 16 21:57 foo
+-rw-rw-r-- 1 kea kea  11K Dec 15 19:40 TheShell_tut
+drwxrwxr-x 6 kea kea 4.0K Dec 15 13:20 ..
+
+2. Write bash functions marco and polo that do the following. Whenever you execute marco the current working directory should be saved in some manner, then when you execute polo, no matter what directory you are in, polo should cd you back to the directory where you executed marco. For ease of debugging you can write the code in a file marco.sh and (re)load the definitions to your shell by executing source marco.sh.
+
+marco.sh:
+
+#!/bin/env bash
+
+marco () {
+	pwd > /tmp/marco
+}
+
+polo () {
+	cd $(cat /tmp/marco)
+}
+
+NOTE: Also added shipwreck function to remove marco file.
+
+3. Say you have a command that fails rarely. In order to debug it you need to capture its output but it can be time consuming to get a failure run. Write a bash script that runs the following script until it fails and captures its standard output and error streams to files and prints everything at the end. Bonus points if you can also report how many runs it took for the script to fail.
+
+random.sh:
+ _________________________________________________
+|												  |
+| #!/usr/bin/env bash							  |
+|												  |
+| n=$(( RANDOM % 100 ))							  |
+|												  |
+| if [[ n -eq 42 ]]; then						  |
+|    echo "Something went wrong"				  |
+|    >&2 echo "The error was using magic numbers" |
+|    exit 1										  |
+| fi											  |
+|												  |
+| echo "Everything went according to plan"		  |
+|_________________________________________________|
+
+run.sh:
+ _______________________________________________________________________
+|																		|
+| #!/usr/bin/env bash													|
+|																		|
+| runs=0																|
+| error=0																|
+| while [ true ]; do													|
+|    bash random-fail.sh 1>>/tmp/solve-out.txt 2>>/tmp/solve-error.txt	|
+|    ((++runs))															|
+|    if [ -s /tmp/solve-error.txt ]; then								|
+|        break															|
+|    fi																	|
+| done																	|
+| cat /tmp/solve-out.txt /tmp/solve-error.txt							|
+| rm /tmp/solve-{out,error}.txt											|
+| echo "The command took $runs runs to throw an error."					|
+|_______________________________________________________________________|
+
+

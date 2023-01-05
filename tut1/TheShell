@@ -1,0 +1,192 @@
+1. For this course, you need to be using a Unix shell like Bash or ZSH. If you are on Linux or macOS, you don’t have to do anything special. If you are on Windows, you need to make sure you are not running cmd.exe or PowerShell; you can use Windows Subsystem for Linux or a Linux virtual machine to use Unix-style command-line tools. To make sure you’re running an appropriate shell, you can try the command echo $SHELL. If it says something like /bin/bash or /usr/bin/zsh, that means you’re running the right program.
+
+2. Create a new directory called missing under /tmp.
+
+$ mkdir /tmp/missing && cd /tmp/missing
+
+3. Look up the touch program. The man program is your friend.
+ 
+$ man touch 
+
+4. Use touch to create a new file called semester in missing.
+ 
+$ cd missing && touch semester
+
+5. Write the following into that file, one line at a time:
+ _________________________________________________________
+|														  |
+|	#!/bin/sh											  |
+|	curl --head --silent https://missing.csail.mit.edu	  |
+|_________________________________________________________|
+
+The first line might be tricky to get working. It’s helpful to know that # starts a comment in Bash, and ! has a special meaning even within double-quoted (") strings. Bash treats single-quoted strings (') differently: they will do the trick in this case. See the Bash quoting manual page for more information.
+ 
+$ cat >> semester
+ #!/bin/sh
+ curl --head --silent https://missing.csail.mit.edu
+
+ <press: ctrl D>
+
+6. Try to execute the file, i.e. type the path to the script (./semester) into your shell and press enter. Understand why it doesn’t work by consulting the output of ls (hint: look at the permission bits of the file).
+
+$ ./semester
+bash: ./semester: Permission denied
+$ ls -l
+total 4
+-rw-rw-r-- 1 kea kea 203 Dec 15 13:43 semester
+
+7. Run the command by explicitly starting the sh interpreter, and giving it the file semester as the first argument, i.e. sh semester. Why does this work, while ./semester didn’t?
+
+ Running ./semester did not work given that this method attempts to run the script as a program and with the absence of 'x' permissions in the file, it fails. The sh semester command however, executes /bin/sh and takes semester as a parameter hence the permissions on the file are irrelevant (which suggests that the file may be parsed and the instructions executed in sh).
+
+8. Look up the chmod program (e.g. use man chmod).
+
+$ man chmod
+CHMOD(1)                                                       User Commands                                                      CHMOD(1)
+
+NAME
+       chmod - change file mode bits
+
+SYNOPSIS
+       chmod [OPTION]... MODE[,MODE]... FILE...
+       chmod [OPTION]... OCTAL-MODE FILE...
+       chmod [OPTION]... --reference=RFILE FILE...
+
+DESCRIPTION
+       This  manual page documents the GNU version of chmod.  chmod changes the file mode bits of each given file according to mode, which
+       can be either a symbolic representation of changes to make, or an octal number representing the bit pattern for the new mode bits.
+
+       The format of a symbolic mode is [ugoa...][[-+=][perms...]...], where perms is either zero or more letters from the set rwxXst,  or
+       a single letter from the set ugo.  Multiple symbolic modes can be given, separated by commas.
+
+       A  combination  of the letters ugoa controls which users' access to the file will be changed: the user who owns it (u), other users
+       in the file's group (g), other users not in the file's group (o), or all users (a).  If none of these are given, the effect  is  as
+       if (a) were given, but bits that are set in the umask are not affected.
+
+       The  operator + causes the selected file mode bits to be added to the existing file mode bits of each file; - causes them to be re‐
+       moved; and = causes them to be added and causes unmentioned bits to be removed except that a directory's unmentioned set  user  and
+       group ID bits are not affected.
+
+       The letters rwxXst select file mode bits for the affected users: read (r), write (w), execute (or search for directories) (x), exe‐
+       cute/search only if the file is a directory or already has execute permission for some user (X), set user or group ID on  execution
+       (s),  restricted deletion flag or sticky bit (t).  Instead of one or more of these letters, you can specify exactly one of the let‐
+       ters ugo: the permissions granted to the user who owns the file (u), the permissions granted to other users who are members of  the
+       file's group (g), and the permissions granted to users that are in neither of the two preceding categories (o).
+
+       A  numeric  mode is from one to four octal digits (0-7), derived by adding up the bits with values 4, 2, and 1.  Omitted digits are
+       assumed to be leading zeros.  The first digit selects the set user ID (4) and set group ID (2) and restricted  deletion  or  sticky
+       (1)  attributes.   The  second  digit selects permissions for the user who owns the file: read (4), write (2), and execute (1); the
+       third selects permissions for other users in the file's group, with the same values; and the fourth for  other  users  not  in  the
+       file's group, with the same values.
+
+       chmod  never changes the permissions of symbolic links; the chmod system call cannot change their permissions.  This is not a prob‐
+       lem since the permissions of symbolic links are never used.  However, for each symbolic link listed  on  the  command  line,  chmod
+       changes  the  permissions of the pointed-to file.  In contrast, chmod ignores symbolic links encountered during recursive directory
+       traversals.
+
+SETUID AND SETGID BITS
+       chmod clears the set-group-ID bit of a regular file if the file's group ID does not match the user's effective group ID or  one  of
+       the  user's supplementary group IDs, unless the user has appropriate privileges.  Additional restrictions may cause the set-user-ID
+       and set-group-ID bits of MODE or RFILE to be ignored.  This behavior depends on the policy  and  functionality  of  the  underlying
+       chmod system call.  When in doubt, check the underlying system behavior.
+
+       For  directories  chmod  preserves set-user-ID and set-group-ID bits unless you explicitly specify otherwise.  You can set or clear
+       the bits with symbolic modes like u+s and g-s.  To clear these bits for directories with a  numeric  mode  requires  an  additional
+       leading zero, or leading = like 00755 , or =755
+
+RESTRICTED DELETION FLAG OR STICKY BIT
+       The  restricted  deletion  flag  or sticky bit is a single bit, whose interpretation depends on the file type.  For directories, it
+       prevents unprivileged users from removing or renaming a file in the directory unless they own the file or the  directory;  this  is
+       called  the restricted deletion flag for the directory, and is commonly found on world-writable directories like /tmp.  For regular
+       files on some older systems, the bit saves the program's text image on the swap device so it will load more quickly when run;  this
+       is called the sticky bit.
+
+OPTIONS
+       Change the mode of each FILE to MODE.  With --reference, change the mode of each FILE to that of RFILE.
+
+       -c, --changes
+              like verbose but report only when a change is made
+
+       -f, --silent, --quiet
+              suppress most error messages
+
+       -v, --verbose
+              output a diagnostic for every file processed
+
+       --no-preserve-root
+              do not treat '/' specially (the default)
+
+       --preserve-root
+              fail to operate recursively on '/'
+
+       --reference=RFILE
+              use RFILE's mode instead of MODE values
+
+       -R, --recursive
+              change files and directories recursively
+
+       --help display this help and exit
+
+       --version
+              output version information and exit
+
+       Each MODE is of the form '[ugoa]*([-+=]([rwxXst]*|[ugo]))+|[-+=][0-7]+'.
+
+AUTHOR
+       Written by David MacKenzie and Jim Meyering.
+
+REPORTING BUGS
+       GNU coreutils online help: <https://www.gnu.org/software/coreutils/>
+       Report chmod translation bugs to <https://translationproject.org/team/>
+
+COPYRIGHT
+       Copyright © 2018 Free Software Foundation, Inc.  License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.
+       This is free software: you are free to change and redistribute it.  There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+       chmod(2)
+
+       Full documentation at: <https://www.gnu.org/software/coreutils/chmod>
+       or available locally via: info '(coreutils) chmod invocation'
+
+GNU coreutils 8.30                                            September 2019                                                      CHMOD(1)
+
+9. Use chmod to make it possible to run the command ./semester rather than having to type sh semester. How does your shell know that the file is supposed to be interpreted using sh? See this page on the shebang line for more information.
+
+$ chmod u+x semester
+$ ls -l
+total 4
+-rwxrw-r-- 1 kea kea 61 Dec 15 13:48 semester
+$ ./semester
+HTTP/2 200 
+server: GitHub.com
+content-type: text/html; charset=utf-8
+last-modified: Mon, 05 Dec 2022 15:59:23 GMT
+access-control-allow-origin: *
+etag: "638e155b-1f37"
+expires: Thu, 15 Dec 2022 17:06:24 GMT
+cache-control: max-age=600
+x-proxy-cache: MISS
+x-github-request-id: 8CDA:20DB:18803DA:195581D:639B51B8
+accept-ranges: bytes
+date: Thu, 15 Dec 2022 17:01:18 GMT
+via: 1.1 varnish
+age: 294
+x-served-by: cache-jnb7025-JNB
+x-cache: HIT
+x-cache-hits: 1
+x-timer: S1671123679.623798,VS0,VE2
+vary: Accept-Encoding
+x-fastly-request-id: 2a4f14c77cbe39a743a740503257be772b9adce3
+content-length: 7991
+
+ The shell knows that this file is to be interpreted using sh because of the first line of the file, beginning with the #! (shebang) directive. It is used to tell the operating system which interpreter to use to parse the rest of the file.
+
+10. Use | and > to write the “last modified” date output by semester into a file called last-modified.txt in your home directory.
+
+$ ls -l /tmp/missing/ | tail -c 22 > ~/last-modified.txt
+
+11. Write a command that reads out your laptop battery’s power level or your desktop machine’s CPU temperature from /sys.
+
+$ cat /sys/class/power_supply/BAT0/capacity
+100
